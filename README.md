@@ -2,6 +2,10 @@
 
 AI-pohjainen liikenekameravalvontajärjestelmä, joka analysoi Digitraffic-palvelun kamerakuvia ja havaitsee automaattisesti villieläimiä, henkilöitä ja muita kohteita käyttäen YOLO World XL -mallia.
 
+Järjestelmä toimii täysin automaattisesti: EventBridge Scheduler käynnistää työnkulun joka tunti kello 09:00-16:00 (Helsinki) kutsumalla `fetch-camera-list` Lambda-funktiota. Tämä hakee DigiTrafficista kamerat 5 km säteellä Tampereen keskustasta, suodattaa pois tienpintakamerat, ja julkaisee kameratiedot SQS-jonoon. `download-image` Lambda lukee jonosta, lataa tuoreimmat kuvat S3:een ja välittää ne edelleen analyysijononon. `analyze-image` Lambda suorittaa koneoppimisanalyysin Replicate API:lla, tallentaa tulokset DynamoDB:hen ja julkaisee EventBridge-eventin. Jos havainnot sisältävät eläimiä tai henkilöitä, EventBridge-sääntö laukaisee `send-alert` Lambda-funktion, joka lähettää sähköpostialertit SNS:n kautta. 
+
+Koko AWS-infrastruktuuri määritellään ja julkaistaan AWS CDK:lla (Infrastructure as Code).
+
 ## Järjestelmän kuvaus
 
 ### Arkkitehtuuri
