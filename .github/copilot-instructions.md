@@ -1,0 +1,1 @@
+use adr files as instructions when imoplementing code: /docs/adr

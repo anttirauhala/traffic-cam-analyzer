@@ -1,0 +1,72 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# CDK
+.cdk.staging/
+cdk.out/
+cdk-outputs.json
+
+# Build outputs
+dist/
+build/
+*.js
+*.d.ts
+*.js.map
+
+# But keep config files
+!*.config.js
+!*.config.mjs
+!jest.config.js
+!vite.config.ts
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# AWS
+.aws-sam/
+samconfig.toml
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Lambda build artifacts
+*.zip
+
+# Local DynamoDB
+.dynamodb/

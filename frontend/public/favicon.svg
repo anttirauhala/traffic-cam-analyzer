@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Gradient background -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a73e8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4285f4;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="lens" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#e8f0fe;stop-opacity:0.7" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#bg)"/>
+  
+  <!-- Camera body -->
+  <rect x="16" y="22" width="32" height="24" rx="3" fill="#34495e" opacity="0.9"/>
+  
+  <!-- Camera lens -->
+  <circle cx="32" cy="34" r="10" fill="url(#lens)"/>
+  <circle cx="32" cy="34" r="7" fill="#34495e" opacity="0.3"/>
+  <circle cx="30" cy="32" r="2" fill="#ffffff" opacity="0.8"/>
+  
+  <!-- AI indicator (neural network dot) -->
+  <circle cx="44" cy="26" r="3" fill="#ff6b6b"/>
+  <circle cx="44" cy="26" r="5" fill="none" stroke="#ff6b6b" stroke-width="1" opacity="0.5">
+    <animate attributeName="r" from="3" to="7" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" from="0.5" to="0" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Viewfinder/Focus indicator -->
+  <path d="M 20 28 L 22 28 M 42 28 L 44 28 M 20 40 L 22 40 M 42 40 L 44 40" 
+        stroke="#4fc3f7" stroke-width="1.5" fill="none" opacity="0.6"/>
+</svg>

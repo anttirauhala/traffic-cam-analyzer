@@ -1,0 +1,32 @@
+{
+  "name": "traffic-cam-infra",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.931.0",
+    "@aws-sdk/client-eventbridge": "^3.931.0",
+    "@aws-sdk/client-s3": "^3.931.0",
+    "@aws-sdk/client-secrets-manager": "^3.931.0",
+    "@aws-sdk/client-sns": "^3.931.0",
+    "@aws-sdk/client-sqs": "^3.931.0",
+    "@aws-sdk/lib-dynamodb": "^3.931.0",
+    "@aws-sdk/s3-request-presigner": "^3.931.0",
+    "aws-cdk-lib": "^2.154.0",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.158",
+    "@types/node": "^20.11.17",
+    "aws-cdk": "^2.154.0",
+    "esbuild": "^0.21.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

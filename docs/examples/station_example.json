@@ -1,0 +1,83 @@
+{
+  "type" : "Feature",
+  "id" : "C04507",
+  "geometry" : {
+    "type" : "Point",
+    "coordinates" : [ 23.769505, 61.462733, 0.000000 ]
+  },
+  "properties" : {
+    "id" : "C04507",
+    "name" : "vt3_Tampere_Lakalaiva",
+    "cameraType" : "VAPIX",
+    "nearestWeatherStationId" : 4006,
+    "collectionStatus" : "GATHERING",
+    "state" : null,
+    "dataUpdatedTime" : "2025-10-26T15:26:24Z",
+    "collectionInterval" : 600,
+    "names" : {
+      "fi" : "Tie 3 Tampere, Lakalaiva",
+      "sv" : "Väg 3 Tammerfors, Lakalaiva",
+      "en" : "Road 3 Tampere, Lakalaiva"
+    },
+    "roadAddress" : {
+      "roadNumber" : 3,
+      "roadSection" : 136,
+      "distanceFromRoadSectionStart" : 0,
+      "carriageway" : "DUAL_CARRIAGEWAY_RIGHT_IN_INCREASING_DIRECTION",
+      "side" : "LEFT",
+      "contractArea" : "",
+      "contractAreaCode" : 310
+    },
+    "liviId" : "Livi1089260",
+    "country" : null,
+    "startTime" : "2009-10-30T00:00:00Z",
+    "repairMaintenanceTime" : null,
+    "annualMaintenanceTime" : null,
+    "purpose" : "keli",
+    "municipality" : "Tampere",
+    "municipalityCode" : 837,
+    "province" : "Pirkanmaa",
+    "provinceCode" : 6,
+    "presets" : [ {
+      "id" : "C0450701",
+      "presentationName" : "Vaasaan",
+      "inCollection" : true,
+      "resolution" : "1280x720",
+      "directionCode" : "1",
+      "imageUrl" : "https://weathercam.digitraffic.fi/C0450701.jpg",
+      "direction" : "INCREASING_DIRECTION"
+    }, {
+      "id" : "C0450702",
+      "presentationName" : "Helsinkiin",
+      "inCollection" : true,
+      "resolution" : "1280x720",
+      "directionCode" : "2",
+      "imageUrl" : "https://weathercam.digitraffic.fi/C0450702.jpg",
+      "direction" : "DECREASING_DIRECTION"
+    }, {
+      "id" : "C0450703",
+      "presentationName" : "Tie 9 Jyväskylään",
+      "inCollection" : true,
+      "resolution" : "1280x720",
+      "directionCode" : "3",
+      "imageUrl" : "https://weathercam.digitraffic.fi/C0450703.jpg",
+      "direction" : "CROSSING_ROAD_INCREASING_DIRECTION"
+    }, {
+      "id" : "C0450704",
+      "presentationName" : "Tie 3495 Tampereelle",
+      "inCollection" : true,
+      "resolution" : "1280x720",
+      "directionCode" : "4",
+      "imageUrl" : "https://weathercam.digitraffic.fi/C0450704.jpg",
+      "direction" : "CROSSING_ROAD_DECREASING_DIRECTION"
+    }, {
+      "id" : "C0450709",
+      "presentationName" : "Tie 9 Tienpinta",
+      "inCollection" : true,
+      "resolution" : "1280x720",
+      "directionCode" : "9",
+      "imageUrl" : "https://weathercam.digitraffic.fi/C0450709.jpg",
+      "direction" : "SPECIAL_DIRECTION"
+    } ]
+  }
+}
