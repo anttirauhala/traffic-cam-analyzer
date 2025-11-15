@@ -5,7 +5,7 @@ import type {
   GetImageUrlResponse,
 } from './types';
 
-const API_BASE_URL = 'https://8qzkddzhs7.execute-api.eu-north-1.amazonaws.com/dev';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://8qzkddzhs7.execute-api.eu-north-1.amazonaws.com/dev';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

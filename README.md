@@ -103,6 +103,13 @@ React + TypeScript -sovellus:
    npm install
    ```
 
+4. **Frontend-konfiguraatio**:
+   ```bash
+   cd frontend
+   cp .env.example .env
+   # Muokkaa .env tiedostoa ja aseta API Gateway URL deployauksen jälkeen
+   ```
+
 ### Deployment
 
 #### 1. Infrastruktuurin deployaus
@@ -117,7 +124,12 @@ npx cdk deploy --all
 ALERT_EMAIL="your.email@example.com" npx cdk deploy --all
 ```
 
-**Huom**: Jos asetat ALERT_EMAIL:n, AWS lähettää vahvistusviestin sähköpostiisi. Klikkaa linkkiä vahvistaaksesi SNS-tilauksen.
+**Huom**: 
+- Jos asetat ALERT_EMAIL:n, AWS lähettää vahvistusviestin sähköpostiisi. Klikkaa linkkiä vahvistaaksesi SNS-tilauksen.
+- Deployauksen jälkeen CDK tulostaa API Gateway URL:n. Kopioi se ja päivitä `frontend/.env` tiedostoon:
+  ```
+  VITE_API_BASE_URL=https://your-api-id.execute-api.eu-north-1.amazonaws.com/dev
+  ```
 
 #### 2. Frontend-kehityspalvelin
 
