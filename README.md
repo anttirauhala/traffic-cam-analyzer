@@ -119,20 +119,7 @@ ALERT_EMAIL="your.email@example.com" npx cdk deploy --all
 
 **Huom**: Jos asetat ALERT_EMAIL:n, AWS lähettää vahvistusviestin sähköpostiisi. Klikkaa linkkiä vahvistaaksesi SNS-tilauksen.
 
-#### 2. Yksittäisten stackien deployaus
-
-```bash
-# Vain storage
-npx cdk deploy TrafficCamStorageStack
-
-# Vain workflow
-ALERT_EMAIL="your.email@example.com" npx cdk deploy TrafficCamWorkflowStack
-
-# Vain API
-npx cdk deploy TrafficCamApiStack
-```
-
-#### 3. Frontend-kehityspalvelin
+#### 2. Frontend-kehityspalvelin
 
 ```bash
 cd frontend
@@ -140,7 +127,7 @@ npm run dev
 # Avautuu http://localhost:5173
 ```
 
-#### 4. Frontend-tuotantobuild
+#### 3. Frontend-tuotantobuild
 
 ```bash
 cd frontend
