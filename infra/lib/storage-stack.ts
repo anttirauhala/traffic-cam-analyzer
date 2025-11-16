@@ -52,7 +52,9 @@ export class StorageStack extends cdk.Stack {
       partitionKey: { name: 'cameraId', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'capturedAtEpoch', type: dynamodb.AttributeType.NUMBER },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      pointInTimeRecovery: true,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: true,
+      },
       removalPolicy: RemovalPolicy.RETAIN,
       encryption: dynamodb.TableEncryption.AWS_MANAGED,
     });

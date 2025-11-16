@@ -1,4 +1,6 @@
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { EventBridgeEvent } from 'aws-lambda';
 
 interface DetectionAlert {
@@ -9,15 +11,22 @@ interface DetectionAlert {
   hasWildlife: boolean;
   hasPerson: boolean;
   detectedClasses: string[];
+  processedObjectKey: string;
 }
 
 const TOPIC_ARN = process.env.ALERT_TOPIC_ARN;
+const PROCESSED_BUCKET = process.env.PROCESSED_BUCKET_NAME;
 
 if (!TOPIC_ARN) {
   throw new Error('Missing required environment variable: ALERT_TOPIC_ARN');
 }
 
+if (!PROCESSED_BUCKET) {
+  throw new Error('Missing required environment variable: PROCESSED_BUCKET_NAME');
+}
+
 const snsClient = new SNSClient({});
+const s3Client = new S3Client({});
 
 export const handler = async (event: EventBridgeEvent<'ImageAnalyzed', DetectionAlert>): Promise<void> => {
   console.log('Processing alert event:', JSON.stringify(event, null, 2));
@@ -30,9 +39,19 @@ export const handler = async (event: EventBridgeEvent<'ImageAnalyzed', Detection
     return;
   }
 
+  // Generate presigned URL for the processed image (valid for 24 hours)
+  const imageUrl = await getSignedUrl(
+    s3Client,
+    new GetObjectCommand({
+      Bucket: PROCESSED_BUCKET,
+      Key: detection.processedObjectKey,
+    }),
+    { expiresIn: 86400 }, // 24 hours
+  );
+
   const subject = `🔔 Kamerahavainto: ${detection.cameraName}`;
   
-  const message = buildAlertMessage(detection);
+  const message = buildAlertMessage(detection, imageUrl);
 
   try {
     await snsClient.send(
@@ -50,7 +69,7 @@ export const handler = async (event: EventBridgeEvent<'ImageAnalyzed', Detection
   }
 };
 
-const buildAlertMessage = (detection: DetectionAlert): string => {
+const buildAlertMessage = (detection: DetectionAlert, imageUrl: string): string => {
   const lines: string[] = [];
   
   lines.push('═══════════════════════════════════════');
@@ -81,6 +100,10 @@ const buildAlertMessage = (detection: DetectionAlert): string => {
     });
     lines.push('');
   }
+  
+  lines.push('🖼️  Analysoidun kuvan linkki (voimassa 24h):');
+  lines.push(imageUrl);
+  lines.push('');
   
   lines.push('───────────────────────────────────────');
   lines.push('');

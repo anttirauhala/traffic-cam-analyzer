@@ -22,4 +22,5 @@ export interface DownloadImageResult extends DownloadImageEvent {
   imageContentType: string | null;
   imageSizeBytes: number;
   downloadedAtIso: string;
+  processedObjectKey?: string; // Added after analysis completes
 }

@@ -93,7 +93,7 @@ export default function App() {
     <div className="app-container">
       {/* Hero Section */}
       <div className="hero-section">
-        <h1 className="hero-title">Liikenekamerat - AI analyysi</h1>
+        <h1 className="hero-title">Liikennekamerakuvat AI-analysoituna</h1>
         <p className="hero-subtitle">Selaa liikenekameroiden havaintoja</p>
 
         {/* Search Form - Google-style centered */}
