@@ -12,10 +12,13 @@ interface DetectionAlert {
   hasPerson: boolean;
   detectedClasses: string[];
   processedObjectKey: string;
+  rawObjectKey?: string;
+  rawBucketName?: string;
 }
 
 const TOPIC_ARN = process.env.ALERT_TOPIC_ARN;
 const PROCESSED_BUCKET = process.env.PROCESSED_BUCKET_NAME;
+const RAW_BUCKET = process.env.RAW_BUCKET_NAME;
 
 if (!TOPIC_ARN) {
   throw new Error('Missing required environment variable: ALERT_TOPIC_ARN');
@@ -39,12 +42,31 @@ export const handler = async (event: EventBridgeEvent<'ImageAnalyzed', Detection
     return;
   }
 
-  // Generate presigned URL for the processed image (valid for 24 hours)
+  // Determine which bucket and key to use for the image
+  // Prefer processed image, fallback to raw image
+  let imageBucket: string;
+  let imageKey: string;
+  
+  if (detection.processedObjectKey && detection.processedObjectKey !== detection.rawObjectKey) {
+    // We have a processed image
+    imageBucket = PROCESSED_BUCKET;
+    imageKey = detection.processedObjectKey;
+  } else if (detection.rawObjectKey && RAW_BUCKET) {
+    // Fallback to raw image
+    imageBucket = RAW_BUCKET;
+    imageKey = detection.rawObjectKey;
+  } else {
+    // Last resort: use processedObjectKey in processed bucket (original behavior)
+    imageBucket = PROCESSED_BUCKET;
+    imageKey = detection.processedObjectKey;
+  }
+
+  // Generate presigned URL for the image (valid for 24 hours)
   const imageUrl = await getSignedUrl(
     s3Client,
     new GetObjectCommand({
-      Bucket: PROCESSED_BUCKET,
-      Key: detection.processedObjectKey,
+      Bucket: imageBucket,
+      Key: imageKey,
     }),
     { expiresIn: 86400 }, // 24 hours
   );

@@ -284,6 +284,7 @@ export class WorkflowStack extends cdk.Stack {
       environment: {
         ALERT_TOPIC_ARN: alertTopic.topicArn,
         PROCESSED_BUCKET_NAME: props.processedBucket.bucketName,
+        RAW_BUCKET_NAME: this.rawBucket.bucketName,
       },
       role: alertRole,
       description: 'Sends email alerts when detections are found in camera images.',
@@ -296,6 +297,7 @@ export class WorkflowStack extends cdk.Stack {
     });
     alertTopic.grantPublish(sendAlertFn);
     props.processedBucket.grantRead(sendAlertFn);
+    this.rawBucket.grantRead(sendAlertFn);
     addStandardTags(sendAlertFn, props.envName, stackId);
 
     // EventBridge rule for image analysis completion with detections

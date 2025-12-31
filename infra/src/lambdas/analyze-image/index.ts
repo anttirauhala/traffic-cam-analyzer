@@ -346,6 +346,8 @@ const publishImageAnalyzedEvent = async (
   hasPerson: boolean,
   detectedClasses: string[],
   processedObjectKey: string,
+  rawObjectKey: string,
+  rawBucketName: string,
 ): Promise<void> => {
   try {
     await eventBridgeClient.send(
@@ -363,6 +365,8 @@ const publishImageAnalyzedEvent = async (
               hasPerson,
               detectedClasses,
               processedObjectKey,
+              rawObjectKey,
+              rawBucketName,
             }),
           },
         ],
@@ -457,6 +461,8 @@ const processAnalysis = async (event: AnalyzeImageEvent): Promise<AnalyzeImageRe
         classification.hasPerson,
         output.detections.map(d => d.label),
         processedImageKey || event.rawObjectKey, // Fallback to raw if processed not available
+        event.rawObjectKey,
+        event.rawBucketName,
       );
     }
 
