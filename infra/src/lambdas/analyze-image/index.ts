@@ -59,25 +59,15 @@ const getReplicateApiToken = async (): Promise<string> => {
 
 const MODEL = 'franz-biz/yolo-world-xl:fd1305d3fc19e81540542f51c2530cf8f393e28cc6ff4976337c3e2b75c7c292';
 const MAX_NUM_BOXES = 100;
-const CONFIDENCE_THRESHOLD = 0.05;
+const CONFIDENCE_THRESHOLD = 0.15;
 const NMS_THRESHOLD = 0.5;
 
 // Wildlife and person detection classes
 const WILDLIFE_CLASSES = [
-  'deer',
-  'moose',
-  'elk',
-  'bear',
-  'wolf',
-  'fox',
-  'wild boar',
-  'reindeer',
-  'hare',
-  'rabbit',
   'animal'
 ];
 
-const PERSON_CLASSES = ['person', 'pedestrian', 'human'];
+const PERSON_CLASSES = ['person'];
 
 const CLASS_NAMES = [...WILDLIFE_CLASSES, ...PERSON_CLASSES].join(', ');
 
@@ -146,7 +136,16 @@ const parseReplicateOutput = (
 
   try {
     const parsed = JSON.parse(jsonStr);
-    const detections: Detection[] = parsed.detections || [];
+
+    // Replicate YOLO World XL returns detections as an object with keys like
+    // { "Det-0": { x0, y0, x1, y1, score, cls }, ... }.
+    // Normalize this into our Detection[] shape.
+    const detections: Detection[] = Object.values(parsed).map((det: any) => ({
+      bbox: [det.x0, det.y0, det.x1, det.y1],
+      label: det.cls,
+      score: det.score,
+    }));
+
     return {
       output: { detections },
       processedImageUrl: prediction.output.media_path || null,
