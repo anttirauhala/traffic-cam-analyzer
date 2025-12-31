@@ -345,6 +345,7 @@ const publishImageAnalyzedEvent = async (
   hasWildlife: boolean,
   hasPerson: boolean,
   detectedClasses: string[],
+  detections: Detection[],
   processedObjectKey: string,
   rawObjectKey: string,
   rawBucketName: string,
@@ -364,6 +365,7 @@ const publishImageAnalyzedEvent = async (
               hasWildlife,
               hasPerson,
               detectedClasses,
+              detections,
               processedObjectKey,
               rawObjectKey,
               rawBucketName,
@@ -460,6 +462,7 @@ const processAnalysis = async (event: AnalyzeImageEvent): Promise<AnalyzeImageRe
         classification.hasWildlife,
         classification.hasPerson,
         output.detections.map(d => d.label),
+        output.detections,
         processedImageKey || event.rawObjectKey, // Fallback to raw if processed not available
         event.rawObjectKey,
         event.rawBucketName,

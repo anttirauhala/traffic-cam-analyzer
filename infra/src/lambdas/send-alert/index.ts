@@ -3,6 +3,12 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { EventBridgeEvent } from 'aws-lambda';
 
+interface DetectionBox {
+  bbox: [number, number, number, number];
+  label: string;
+  score: number;
+}
+
 interface DetectionAlert {
   cameraId: string;
   cameraName: string;
@@ -11,6 +17,7 @@ interface DetectionAlert {
   hasWildlife: boolean;
   hasPerson: boolean;
   detectedClasses: string[];
+  detections?: DetectionBox[];
   processedObjectKey: string;
   rawObjectKey?: string;
   rawBucketName?: string;
@@ -94,9 +101,7 @@ export const handler = async (event: EventBridgeEvent<'ImageAnalyzed', Detection
 const buildAlertMessage = (detection: DetectionAlert, imageUrl: string): string => {
   const lines: string[] = [];
   
-  lines.push('═══════════════════════════════════════');
-  lines.push('  LIIKENEKAMERA - UUSI HAVAINTO');
-  lines.push('═══════════════════════════════════════');
+  lines.push('LIIKENEKAMERA - UUSI HAVAINTO');
   lines.push('');
   
   lines.push(`📍 Kamera: ${detection.cameraName}`);
@@ -115,7 +120,15 @@ const buildAlertMessage = (detection: DetectionAlert, imageUrl: string): string 
     lines.push('');
   }
   
-  if (detection.detectedClasses.length > 0) {
+  // Show detailed detections with confidence scores
+  if (detection.detections && detection.detections.length > 0) {
+    lines.push('📊 Havaintojen tarkkuudet:');
+    detection.detections.forEach((det, index) => {
+      const confidencePercent = (det.score * 100).toFixed(1);
+      lines.push(`   ${index + 1}. ${det.label}: ${confidencePercent}% varmuus`);
+    });
+    lines.push('');
+  } else if (detection.detectedClasses.length > 0) {
     lines.push('📋 Luokat:');
     detection.detectedClasses.forEach(cls => {
       lines.push(`   • ${cls}`);
@@ -127,8 +140,6 @@ const buildAlertMessage = (detection: DetectionAlert, imageUrl: string): string 
   lines.push(imageUrl);
   lines.push('');
   
-  lines.push('───────────────────────────────────────');
-  lines.push('');
   lines.push('Tämä on automaattinen ilmoitus AI-pohjaisesta');
   lines.push('liikenekameravalvonnasta.');
   
