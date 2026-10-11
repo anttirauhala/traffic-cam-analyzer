@@ -43,7 +43,7 @@ Järjestelmä koostuu kolmesta pääkomponentista:
 - **API Gateway REST API** - Rate limiting (50 req/s, 10k/päivä)
 - **Lambda Endpoints**:
   - `GET /cameras` - Listaa kamerat
-  - `GET /detections?cameraId&startDate&endDate` - Hae havaintoja
+  - `GET /detections?cameraId&startDate&endDate&hasWildlife&hasPerson&status&limit` - Hae havaintoja (oletus: vain onnistuneet analyysit, uusimmat ensin)
   - `GET /cameras/{id}/timestamps` - Kameran aikaleimat
   - `GET /detections/{id}/{timestamp}` - Yksittäinen havainto
   - `GET /images?bucket&key` - Presigned URL kuvalle
@@ -300,7 +300,14 @@ Hae havaintoja suodattimilla.
 - `endDate` (optional) - Päättyen (ISO 8601 tai epoch)
 - `hasWildlife` (optional) - `"true"` villieläinhavainnoille
 - `hasPerson` (optional) - `"true"` henkilöhavainnoille
+- `status` (optional) - Analyysin tila. Oletus `SUCCESS` → epäonnistuneet (`FAILED`/`SKIPPED`) suodatetaan pois; `ALL` palauttaa kaikki
 - `limit` (optional, max 100) - Tulosten määrä
+- `nextToken` (optional) - Sivutus: edellisen vastauksen `nextToken`
+
+**Hakulogiikka ja järjestys**:
+- Ilman `cameraId`/`hasWildlife`/`hasPerson`-suodatinta haku tehdään `gsiProcessedAt`-indeksillä (partitio `processingStatus`, järjestys `processedAtEpoch`) → **uusimmat analyysit ensin eikä koko taulun skannausta**. Tämä on oletuspolku "viimeisimmät havainnot" -näkymille. Huom: järjestys on analyysiajan (`processedAtEpoch`), ei kuvausajan mukaan.
+- `hasWildlife=true` → `gsiHasWildlife`, `hasPerson=true` → `gsiHasPerson`, `cameraId` → taulun perusavain.
+- `status=ALL` tekee koko taulun skannauksen (hitaampi, käytä vain jos tarvitset myös epäonnistuneet analyysit).
 
 **Vastaus**:
 ```json
@@ -314,6 +321,7 @@ Hae havaintoja suodattimilla.
       "hasPerson": false,
       "detectionCount": 2,
       "detectedClasses": ["deer", "car"],
+      "processingStatus": "SUCCESS",
       "rawImageKey": "...",
       "processedImageKey": "..."
     }
@@ -327,7 +335,31 @@ Hae havaintoja suodattimilla.
 Yksittäisen havainnon detaljit.
 
 #### GET /cameras/{cameraId}/timestamps
-Listan kameran aikaleimoja.
+Listaa kameran aikaleimat (uusin ensin). Oletuksena vain onnistuneet analyysit.
+
+**Query-parametrit**:
+- `startDate`, `endDate` (optional) - Aikaväli (ISO 8601 tai epoch)
+- `limit` (optional, oletus 100, max 1000) - Aikaleimojen määrä
+- `nextToken` (optional) - Sivutus: edellisen vastauksen `nextToken`
+- `status` (optional) - Oletus `SUCCESS` (FAILED pois); `ALL` palauttaa kaikki
+
+**Vastaus**:
+```json
+{
+  "cameraId": "C04530:C0453002",
+  "timestamps": [
+    {
+      "capturedAtEpoch": 1731686400,
+      "capturedAt": "2025-11-15T14:00:00Z",
+      "hasWildlife": false,
+      "hasPerson": false,
+      "processingStatus": "SUCCESS"
+    }
+  ],
+  "count": 100,
+  "nextToken": "..."
+}
+```
 
 #### GET /images?bucket=raw&key=...
 Palauttaa presigned URL:n S3-kuvalle (1h voimassa).
