@@ -7,6 +7,15 @@ import type { ImageDetectionItem } from '../../shared/analyze-image';
 const DETECTIONS_TABLE_NAME = process.env.DETECTIONS_TABLE_NAME;
 const WILDLIFE_GSI_NAME = process.env.WILDLIFE_GSI_NAME || 'hasWildlife-capturedAtEpoch-index';
 const PERSON_GSI_NAME = process.env.PERSON_GSI_NAME || 'hasPerson-capturedAtEpoch-index';
+// gsiProcessedAt (partitio processingStatus, järjestys processedAtEpoch) mahdollistaa
+// "viimeisimmät havainnot" -haun ilman koko taulun skannausta.
+const PROCESSED_GSI_NAME = process.env.PROCESSED_GSI_NAME || 'gsiProcessedAt';
+
+// Onnistumisen tila: oletuksena näytetään vain SUCCESS-rivit, jolloin
+// epäonnistuneet analyysit (esim. Replicate-throttlaus) eivät näy käyttäjälle.
+// `status=ALL` palauttaa kaiken, myös FAILED/SKIPPED-rivit.
+const DEFAULT_STATUS = 'SUCCESS';
+const STATUS_ALL = 'ALL';
 
 if (!DETECTIONS_TABLE_NAME) {
   throw new Error('Missing required environment variable: DETECTIONS_TABLE_NAME');
@@ -61,6 +70,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const limit = params.limit ? Math.min(parseInt(params.limit, 10), 100) : 20;
     const { nextToken, hasWildlife, hasPerson, cameraId, startDate, endDate } = params;
 
+    // Tilasuodatin: oletus SUCCESS (FAILED pois), `status=ALL` palauttaa kaikki.
+    const statusParam = (params.status ?? DEFAULT_STATUS).toUpperCase();
+    const filterByStatus = statusParam !== STATUS_ALL;
+
     // Parse date filters to epoch timestamps
     let startEpoch: number | undefined;
     let endEpoch: number | undefined;
@@ -83,7 +96,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         KeyConditionExpression: 'hasWildlife = :hasWildlife',
         ExpressionAttributeValues: {
           ':hasWildlife': 'true',
+          ...(filterByStatus ? { ':status': statusParam } : {}),
         },
+        ...(filterByStatus ? { FilterExpression: 'processingStatus = :status' } : {}),
         ScanIndexForward: false, // newest first
         Limit: limit,
         ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
@@ -106,7 +121,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         KeyConditionExpression: 'hasPerson = :hasPerson',
         ExpressionAttributeValues: {
           ':hasPerson': 'true',
+          ...(filterByStatus ? { ':status': statusParam } : {}),
         },
+        ...(filterByStatus ? { FilterExpression: 'processingStatus = :status' } : {}),
         ScanIndexForward: false,
         Limit: limit,
         ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
@@ -141,9 +158,14 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         expressionValues[':end'] = endEpoch;
       }
 
+      if (filterByStatus) {
+        expressionValues[':status'] = statusParam;
+      }
+
       const queryInput: QueryCommandInput = {
         TableName: DETECTIONS_TABLE_NAME,
         KeyConditionExpression: keyConditionParts.join(' AND '),
+        ...(filterByStatus ? { FilterExpression: 'processingStatus = :status' } : {}),
         ExpressionAttributeValues: expressionValues,
         ScanIndexForward: false,
         Limit: limit,
@@ -160,8 +182,49 @@ export const handler: APIGatewayProxyHandler = async (event) => {
           : undefined,
       };
       return successResponse(response);
+    } else if (filterByStatus) {
+      // Oletuspolku: uusimmat onnistuneet analyysit kaikilta kameroilta.
+      // gsiProcessedAt (processingStatus → processedAtEpoch, uusimmat ensin)
+      // välttää koko taulun skannauksen. Päiväsuodatin kohdistuu
+      // capturedAtEpoch-kenttään eli ei ole indeksin avain → FilterExpression.
+      const filterExpressions: string[] = [];
+      const expressionValues: Record<string, unknown> = { ':status': statusParam };
+
+      if (startEpoch && endEpoch) {
+        filterExpressions.push('capturedAtEpoch BETWEEN :start AND :end');
+        expressionValues[':start'] = startEpoch;
+        expressionValues[':end'] = endEpoch;
+      } else if (startEpoch) {
+        filterExpressions.push('capturedAtEpoch >= :start');
+        expressionValues[':start'] = startEpoch;
+      } else if (endEpoch) {
+        filterExpressions.push('capturedAtEpoch <= :end');
+        expressionValues[':end'] = endEpoch;
+      }
+
+      const processedQueryInput: QueryCommandInput = {
+        TableName: DETECTIONS_TABLE_NAME,
+        IndexName: PROCESSED_GSI_NAME,
+        KeyConditionExpression: 'processingStatus = :status',
+        FilterExpression: filterExpressions.length > 0 ? filterExpressions.join(' AND ') : undefined,
+        ExpressionAttributeValues: expressionValues,
+        ScanIndexForward: false, // uusimmat ensin (processedAtEpoch)
+        Limit: limit,
+        ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
+      };
+
+      const result = await dynamoClient.send(new QueryCommand(processedQueryInput));
+      const items = (result.Items || []) as ImageDetectionItem[];
+      const response: ListDetectionsResponse = {
+        items: items.map(mapItemToSummary),
+        count: items.length,
+        nextToken: result.LastEvaluatedKey
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : undefined,
+      };
+      return successResponse(response);
     } else {
-      // No cameraId - scan table with date filter
+      // status=ALL (tai tuntematon arvo): ei tilasuodatinta → koko taulun skannaus.
       const filterExpressions: string[] = [];
       const expressionValues: Record<string, unknown> = {};
 

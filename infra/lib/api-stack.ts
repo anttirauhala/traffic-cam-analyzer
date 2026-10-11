@@ -78,6 +78,7 @@ export class ApiStack extends cdk.Stack {
         DETECTIONS_TABLE_NAME: props.detectionsTable.tableName,
         WILDLIFE_GSI_NAME: 'hasWildlife-capturedAtEpoch-index',
         PERSON_GSI_NAME: 'hasPerson-capturedAtEpoch-index',
+        PROCESSED_GSI_NAME: 'gsiProcessedAt',
       },
       bundling: {
         target: 'node20',

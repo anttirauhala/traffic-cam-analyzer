@@ -10,6 +10,11 @@ export interface ListDetectionsRequest {
   cameraId?: string;
   startDate?: string; // ISO date string or epoch timestamp
   endDate?: string; // ISO date string or epoch timestamp
+  /**
+   * Analyysin tila. Oletus `SUCCESS` suodattaa epäonnistuneet pois;
+   * `ALL` palauttaa kaikki (myös FAILED/SKIPPED).
+   */
+  status?: 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'ALL';
 }
 
 export interface DetectionSummary {
@@ -85,6 +90,8 @@ export interface ListCameraTimestampsResponse {
   cameraId: string;
   timestamps: CameraTimestamp[];
   count: number;
+  /** Sivutus: seuraava sivu (base64-encoded LastEvaluatedKey), jos lisää riittää. */
+  nextToken?: string;
 }
 
 export interface ApiErrorResponse {

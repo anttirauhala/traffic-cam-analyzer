@@ -10,6 +10,15 @@ if (!DETECTIONS_TABLE_NAME) {
   throw new Error('Missing required environment variable: DETECTIONS_TABLE_NAME');
 }
 
+// Aikaleimalistan oletuskoko ja yläraja. Yhdellä kameralla voi olla satoja
+// otoksia, joten lista sivutetaan (nextToken) raskaan vastauksen välttämiseksi.
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 1000;
+
+// Tilasuodatin: oletuksena vain SUCCESS-rivit (FAILED pois), `status=ALL` kaikki.
+const DEFAULT_STATUS = 'SUCCESS';
+const STATUS_ALL = 'ALL';
+
 const dynamoClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 const corsHeaders = {
@@ -57,7 +66,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     }
 
     const params = event.queryStringParameters || {};
-    const { startDate, endDate } = params;
+    const { startDate, endDate, nextToken } = params;
+    // Oletus 100 aikaleimaa; yläraja 1000.
+    const limit = params.limit ? Math.min(parseInt(params.limit, 10), MAX_LIMIT) : DEFAULT_LIMIT;
+    const statusParam = (params.status ?? DEFAULT_STATUS).toUpperCase();
+    const filterByStatus = statusParam !== STATUS_ALL;
 
     // Parse date filters to epoch timestamps
     let startEpoch: number | undefined;
@@ -91,13 +104,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       expressionValues[':end'] = endEpoch;
     }
 
+    if (filterByStatus) {
+      expressionValues[':status'] = statusParam;
+    }
+
     const result = await dynamoClient.send(
       new QueryCommand({
         TableName: DETECTIONS_TABLE_NAME,
         KeyConditionExpression: keyConditionParts.join(' AND '),
+        ...(filterByStatus ? { FilterExpression: 'processingStatus = :status' } : {}),
         ExpressionAttributeValues: expressionValues,
         ProjectionExpression: 'capturedAtEpoch, capturedAt, hasWildlife, hasPerson, processingStatus',
         ScanIndexForward: false, // newest first
+        Limit: limit,
+        ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
       }),
     );
 
@@ -106,6 +126,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       cameraId,
       timestamps: items.map(mapItemToTimestamp),
       count: items.length,
+      nextToken: result.LastEvaluatedKey
+        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+        : undefined,
     };
 
     return successResponse(response);
