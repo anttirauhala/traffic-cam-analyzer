@@ -10,6 +10,9 @@ const PERSON_GSI_NAME = process.env.PERSON_GSI_NAME || 'hasPerson-capturedAtEpoc
 // gsiProcessedAt (partitio processingStatus, järjestys processedAtEpoch) mahdollistaa
 // "viimeisimmät havainnot" -haun ilman koko taulun skannausta.
 const PROCESSED_GSI_NAME = process.env.PROCESSED_GSI_NAME || 'gsiProcessedAt';
+// gsiHasDetection (partitio hasDetection, järjestys capturedAtEpoch) palauttaa
+// vain rivit, joissa analyysi löysi vähintään yhden kohteen.
+const HAS_DETECTION_GSI_NAME = process.env.HAS_DETECTION_GSI_NAME || 'gsiHasDetection';
 
 // Onnistumisen tila: oletuksena näytetään vain SUCCESS-rivit, jolloin
 // epäonnistuneet analyysit (esim. Replicate-throttlaus) eivät näy käyttäjälle.
@@ -68,7 +71,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const params = event.queryStringParameters || {};
     const limit = params.limit ? Math.min(parseInt(params.limit, 10), 100) : 20;
-    const { nextToken, hasWildlife, hasPerson, cameraId, startDate, endDate } = params;
+    const { nextToken, hasWildlife, hasPerson, hasDetection, cameraId, startDate, endDate } = params;
 
     // Tilasuodatin: oletus SUCCESS (FAILED pois), `status=ALL` palauttaa kaikki.
     const statusParam = (params.status ?? DEFAULT_STATUS).toUpperCase();
@@ -129,6 +132,33 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
       };
       
+      const result = await dynamoClient.send(new QueryCommand(queryInput));
+      const items = (result.Items || []) as ImageDetectionItem[];
+      const response: ListDetectionsResponse = {
+        items: items.map(mapItemToSummary),
+        count: items.length,
+        nextToken: result.LastEvaluatedKey
+          ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+          : undefined,
+      };
+      return successResponse(response);
+    } else if (hasDetection === 'true') {
+      // "Vain osumalliset": gsiHasDetection palauttaa ainoastaan rivit, joissa
+      // analyysi löysi jotain (hasDetection === 'true'). Uusin kuvausaika ensin.
+      const queryInput: QueryCommandInput = {
+        TableName: DETECTIONS_TABLE_NAME,
+        IndexName: HAS_DETECTION_GSI_NAME,
+        KeyConditionExpression: 'hasDetection = :hasDetection',
+        ExpressionAttributeValues: {
+          ':hasDetection': 'true',
+          ...(filterByStatus ? { ':status': statusParam } : {}),
+        },
+        ...(filterByStatus ? { FilterExpression: 'processingStatus = :status' } : {}),
+        ScanIndexForward: false, // uusimmat ensin (capturedAtEpoch)
+        Limit: limit,
+        ExclusiveStartKey: nextToken ? JSON.parse(Buffer.from(nextToken, 'base64').toString()) : undefined,
+      };
+
       const result = await dynamoClient.send(new QueryCommand(queryInput));
       const items = (result.Items || []) as ImageDetectionItem[];
       const response: ListDetectionsResponse = {

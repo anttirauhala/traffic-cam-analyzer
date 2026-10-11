@@ -254,6 +254,7 @@ const saveDetectionResults = async (
     hasPerson: String(classification.hasPerson),
     detectedClasses: classification.detectedClasses,
     detectionCount: replicateOutput?.detections.length || 0,
+    hasDetection: String((replicateOutput?.detections.length ?? 0) > 0),
     alertSent: false,
     alertChannel: null,
     processingStatus,

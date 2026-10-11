@@ -7,6 +7,11 @@ export interface ListDetectionsRequest {
   nextToken?: string;
   hasWildlife?: 'true' | 'false';
   hasPerson?: 'true' | 'false';
+  /**
+   * `true` → vain rivit, joissa analyysi löysi vähintään yhden kohteen
+   * (DynamoDB GSI `gsiHasDetection`).
+   */
+  hasDetection?: 'true' | 'false';
   cameraId?: string;
   startDate?: string; // ISO date string or epoch timestamp
   endDate?: string; // ISO date string or epoch timestamp

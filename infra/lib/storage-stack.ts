@@ -78,6 +78,15 @@ export class StorageStack extends cdk.Stack {
       projectionType: dynamodb.ProjectionType.ALL,
     });
 
+    // "Vain osumalliset havainnot" -haku (esim. uusimmat havainnot, joissa AI
+    // löysi jotain). Osittaa vain rivit, joilla hasDetection === 'true'.
+    this.detectionsTable.addGlobalSecondaryIndex({
+      indexName: 'gsiHasDetection',
+      partitionKey: { name: 'hasDetection', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'capturedAtEpoch', type: dynamodb.AttributeType.NUMBER },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     addStandardTags(this.detectionsTable, props.envName, stackId);
 
     // Cameras table for fast camera lookups

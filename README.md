@@ -43,7 +43,7 @@ Järjestelmä koostuu kolmesta pääkomponentista:
 - **API Gateway REST API** - Rate limiting (50 req/s, 10k/päivä)
 - **Lambda Endpoints**:
   - `GET /cameras` - Listaa kamerat
-  - `GET /detections?cameraId&startDate&endDate&hasWildlife&hasPerson&status&limit` - Hae havaintoja (oletus: vain onnistuneet analyysit, uusimmat ensin)
+  - `GET /detections?cameraId&startDate&endDate&hasWildlife&hasPerson&hasDetection&status&limit` - Hae havaintoja (oletus: vain onnistuneet analyysit, uusimmat ensin)
   - `GET /cameras/{id}/timestamps` - Kameran aikaleimat
   - `GET /detections/{id}/{timestamp}` - Yksittäinen havainto
   - `GET /images?bucket&key` - Presigned URL kuvalle
@@ -300,13 +300,14 @@ Hae havaintoja suodattimilla.
 - `endDate` (optional) - Päättyen (ISO 8601 tai epoch)
 - `hasWildlife` (optional) - `"true"` villieläinhavainnoille
 - `hasPerson` (optional) - `"true"` henkilöhavainnoille
+- `hasDetection` (optional) - `"true"` → vain havainnot, joissa analyysi löysi vähintään yhden kohteen (GSI `gsiHasDetection`)
 - `status` (optional) - Analyysin tila. Oletus `SUCCESS` → epäonnistuneet (`FAILED`/`SKIPPED`) suodatetaan pois; `ALL` palauttaa kaikki
 - `limit` (optional, max 100) - Tulosten määrä
 - `nextToken` (optional) - Sivutus: edellisen vastauksen `nextToken`
 
 **Hakulogiikka ja järjestys**:
 - Ilman `cameraId`/`hasWildlife`/`hasPerson`-suodatinta haku tehdään `gsiProcessedAt`-indeksillä (partitio `processingStatus`, järjestys `processedAtEpoch`) → **uusimmat analyysit ensin eikä koko taulun skannausta**. Tämä on oletuspolku "viimeisimmät havainnot" -näkymille. Huom: järjestys on analyysiajan (`processedAtEpoch`), ei kuvausajan mukaan.
-- `hasWildlife=true` → `gsiHasWildlife`, `hasPerson=true` → `gsiHasPerson`, `cameraId` → taulun perusavain.
+- `hasWildlife=true` → `gsiHasWildlife`, `hasPerson=true` → `gsiHasPerson`, `hasDetection=true` → `gsiHasDetection`, `cameraId` → taulun perusavain.
 - `status=ALL` tekee koko taulun skannauksen (hitaampi, käytä vain jos tarvitset myös epäonnistuneet analyysit).
 
 **Vastaus**:

@@ -79,6 +79,7 @@ export class ApiStack extends cdk.Stack {
         WILDLIFE_GSI_NAME: 'hasWildlife-capturedAtEpoch-index',
         PERSON_GSI_NAME: 'hasPerson-capturedAtEpoch-index',
         PROCESSED_GSI_NAME: 'gsiProcessedAt',
+        HAS_DETECTION_GSI_NAME: 'gsiHasDetection',
       },
       bundling: {
         target: 'node20',

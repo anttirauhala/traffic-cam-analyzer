@@ -60,6 +60,8 @@ export interface ImageDetectionItem {
   replicateOutput: ReplicateOutput | null;
   hasWildlife: string; // 'true' or 'false' for DynamoDB GSI
   hasPerson: string; // 'true' or 'false' for DynamoDB GSI
+  /** 'true', jos analyysi löysi vähintään yhden kohteen (GSI gsiHasDetection). */
+  hasDetection: string;
   detectedClasses: string[];
   detectionCount: number;
   alertSent: boolean;
