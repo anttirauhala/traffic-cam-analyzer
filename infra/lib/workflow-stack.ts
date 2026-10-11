@@ -196,6 +196,15 @@ export class WorkflowStack extends cdk.Stack {
     });
     this.rawBucket.grantRead(analyzeImageFn);
     props.processedBucket.grantWrite(analyzeImageFn);
+    // Osumallisten kuvien merkitseminen säilytettäväksi (archivalRequired=true,
+    // ks. analyze-image → markArchivalRequired) vaatii PutObjectTagging-oikeuden
+    // molempiin bucketeihin.
+    analyzeImageFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['s3:PutObjectTagging'],
+        resources: [`${this.rawBucket.bucketArn}/*`, `${props.processedBucket.bucketArn}/*`],
+      }),
+    );
         props.detectionsTable.grantWriteData(analyzeImageFn);
     props.camerasTable.grantReadWriteData(analyzeImageFn);
     addStandardTags(analyzeImageFn, props.envName, stackId);

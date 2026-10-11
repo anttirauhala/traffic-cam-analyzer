@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, PutObjectTaggingCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
@@ -212,6 +212,34 @@ const downloadAndUploadProcessedImage = async (
   );
 
   return objectKey;
+};
+
+/**
+ * Merkitse kuva säilytettäväksi (archivalRequired=true).
+ *
+ * Lifecycle-säännöt (raw: 90 pv → Glacier, 365 pv poisto; processed: 180 pv →
+ * Glacier IR, 540 pv poisto) osuvat vain objekteihin, joiden tag on
+ * `archivalRequired=false`. Osumalliset kuvat (eläin/ihminen) merkitään
+ * true:ksi, jotta niitä ei arkistoida eikä poisteta (auditointi, ADR 0013).
+ */
+const markArchivalRequired = async (bucket: string | undefined, key: string | null): Promise<void> => {
+  if (!bucket || !key) {
+    return;
+  }
+  try {
+    await s3Client.send(
+      new PutObjectTaggingCommand({
+        Bucket: bucket,
+        Key: key,
+        Tagging: {
+          TagSet: [{ Key: 'archivalRequired', Value: 'true' }],
+        },
+      }),
+    );
+  } catch (error) {
+    // Tagitus ei saa kaataa analyysiä — lokitetaan ja jatketaan.
+    console.warn(`Failed to tag s3://${bucket}/${key} as archivalRequired=true:`, error);
+  }
 };
 
 /**
@@ -436,6 +464,13 @@ const processAnalysis = async (event: AnalyzeImageEvent): Promise<AnalyzeImageRe
 
     const classification = classifyDetections(output);
     await saveDetectionResults(event, prediction, output, processedImageKey, 'SUCCESS', null);
+
+    // Osumalliset kuvat merkitään säilytettäviksi, jotta lifecycle ei arkistoi
+    // niitä Glacieriin eikä poista niitä (ks. markArchivalRequired).
+    if (output.detections.length > 0) {
+      await markArchivalRequired(event.rawBucketName, event.rawObjectKey);
+      await markArchivalRequired(PROCESSED_BUCKET_NAME, processedImageKey);
+    }
 
     const capturedAtEpoch = Math.floor(new Date(event.camera.lastUpdated || Date.now()).getTime() / 1000);
 

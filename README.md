@@ -23,8 +23,9 @@ Järjestelmä koostuu kolmesta pääkomponentista:
   - `ImageDetections` - Kaikki analyysitulokset (PK: cameraId, SK: capturedAtEpoch)
   - `Cameras` - Kamerametadata (PK: cameraId)
 - **S3 Buckets**:
-  - Raw bucket - Alkuperäiset kuvat (lifecycle: 90d → Glacier, 365d delete)
-  - Processed bucket - Analysoidut kuvat bounding boxeilla
+  - Raw bucket - Alkuperäiset kuvat (lifecycle: 90d → Glacier, 365d delete; koskee vain objekteja, joilla tag `archivalRequired=false`)
+  - Processed bucket - Analysoidut kuvat bounding boxeilla (lifecycle: 180d → Glacier IR, 540d delete; sama tag-rajaus)
+  - **Osumalliset kuvat säilytetään:** kun analyysi löytää kohteen (eläin/ihminen), `analyze-image` merkitsee kuvan tagilla `archivalRequired=true`, jolloin lifecycle ei arkistoi sitä Glacieriin eikä poista sitä (auditointi, ks. ADR 0013).
 
 #### Workflow Stack
 - **EventBridge Scheduler** - Ajastettu käynnistys (09:00-16:00 Helsinki aikavyöhyke)
