@@ -5,8 +5,8 @@ import type { ListDetectionsRequest, ListDetectionsResponse, DetectionSummary } 
 import type { ImageDetectionItem } from '../../shared/analyze-image';
 
 const DETECTIONS_TABLE_NAME = process.env.DETECTIONS_TABLE_NAME;
-const WILDLIFE_GSI_NAME = process.env.WILDLIFE_GSI_NAME || 'hasWildlife-capturedAtEpoch-index';
-const PERSON_GSI_NAME = process.env.PERSON_GSI_NAME || 'hasPerson-capturedAtEpoch-index';
+const WILDLIFE_GSI_NAME = process.env.WILDLIFE_GSI_NAME || 'gsiHasWildlife';
+const PERSON_GSI_NAME = process.env.PERSON_GSI_NAME || 'gsiHasPerson';
 // gsiProcessedAt (partitio processingStatus, järjestys processedAtEpoch) mahdollistaa
 // "viimeisimmät havainnot" -haun ilman koko taulun skannausta.
 const PROCESSED_GSI_NAME = process.env.PROCESSED_GSI_NAME || 'gsiProcessedAt';

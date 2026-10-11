@@ -76,8 +76,8 @@ export class ApiStack extends cdk.Stack {
       functionName: `${prefix}-list-detections`,
       environment: {
         DETECTIONS_TABLE_NAME: props.detectionsTable.tableName,
-        WILDLIFE_GSI_NAME: 'hasWildlife-capturedAtEpoch-index',
-        PERSON_GSI_NAME: 'hasPerson-capturedAtEpoch-index',
+        WILDLIFE_GSI_NAME: 'gsiHasWildlife',
+        PERSON_GSI_NAME: 'gsiHasPerson',
         PROCESSED_GSI_NAME: 'gsiProcessedAt',
         HAS_DETECTION_GSI_NAME: 'gsiHasDetection',
       },
